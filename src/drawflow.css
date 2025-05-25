@@ -139,3 +139,39 @@
   right: -15px;
   top: -15px;
 }
+
+
+.drawflow-input {
+  position: absolute;
+  display: block;
+  width: 30px;
+  height: 30px;
+  background: black;
+  color: white;
+  z-index: 4;
+  border: 2px solid white;
+  line-height: 30px;
+  font-weight: bold;
+  text-align: center;
+  border-radius: 50%;
+  font-family: monospace;
+  cursor: pointer;
+}
+.drawflow > .drawflow-input {
+  margin-left: -15px;
+  margin-top: 15px;
+}
+
+.parent-node .drawflow-input {
+  right: 20px;
+  top: -15px;
+}
+
+.actionInput {
+  left: 0 !important; 
+}
+
+.actions {
+  display: flex;
+  justify-content: space-around;
+}

@@ -315,6 +315,12 @@ export default class Drawflow {
         }
 
       break;
+      case 'drawflow-input':
+        if(this.node_selected ) {
+          this.addActionNodeInput(this.node_selected.id.slice(5));
+        }
+
+      break;
       default:
     }
     if (e.type === "touchstart") {
@@ -466,6 +472,7 @@ export default class Drawflow {
        } else {
          // Fix connection;
          var input_id = ele_last.parentElement.parentElement.id;
+         if (input_id === "") input_id = ele_last.parentElement.parentElement.parentElement.id;
          var input_class = ele_last.classList[1];
        }
        var output_id = this.ele_selected.parentElement.parentElement.id;
@@ -533,14 +540,25 @@ export default class Drawflow {
       deletebox.innerHTML = "x";
       if(this.node_selected) {
         this.node_selected.appendChild(deletebox);
-
       }
       if(this.connection_selected && (this.connection_selected.parentElement.classList.length > 1)) {
         deletebox.style.top = e.clientY * ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) - (this.precanvas.getBoundingClientRect().y *  ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) ) + "px";
         deletebox.style.left = e.clientX * ( this.precanvas.clientWidth / (this.precanvas.clientWidth * this.zoom)) - (this.precanvas.getBoundingClientRect().x *  ( this.precanvas.clientWidth / (this.precanvas.clientWidth * this.zoom)) ) + "px";
 
         this.precanvas.appendChild(deletebox);
+      }
 
+      var inputbox = document.createElement('div');
+      inputbox.classList.add("drawflow-input");
+      inputbox.innerHTML = "+";
+      if(this.node_selected) {
+        this.node_selected.appendChild(inputbox);
+      }
+      if(this.connection_selected && (this.connection_selected.parentElement.classList.length > 1)) {
+        inputbox.style.top = e.clientY * ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) - (this.precanvas.getBoundingClientRect().y *  ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) ) + "px";
+        inputbox.style.left = e.clientX * ( this.precanvas.clientWidth / (this.precanvas.clientWidth * this.zoom)) - (this.precanvas.getBoundingClientRect().x *  ( this.precanvas.clientWidth / (this.precanvas.clientWidth * this.zoom)) ) + "px";
+
+        this.precanvas.appendChild(inputbox);
       }
 
     }
@@ -549,6 +567,9 @@ export default class Drawflow {
   contextmenuDel() {
     if(this.precanvas.getElementsByClassName("drawflow-delete").length) {
       this.precanvas.getElementsByClassName("drawflow-delete")[0].remove()
+    };
+    if(this.precanvas.getElementsByClassName("drawflow-input").length) {
+      this.precanvas.getElementsByClassName("drawflow-input")[0].remove()
     };
   }
 
@@ -1223,6 +1244,7 @@ export default class Drawflow {
 
     const content = document.createElement('div');
     content.classList.add("drawflow_content_node");
+    
     if(typenode === false) {
       content.innerHTML = html;
     } else if (typenode === true) {
@@ -1245,6 +1267,10 @@ export default class Drawflow {
         content.appendChild(wrapper.$el);
       }
     }
+
+    const actions = document.createElement('div');
+    actions.classList.add("actions");
+    content.appendChild(actions);
 
     Object.entries(data).forEach(function (key, value) {
       if(typeof key[1] === "object") {
@@ -1382,6 +1408,10 @@ export default class Drawflow {
         content.appendChild(wrapper.$el);
       }
     }
+
+     const actions = document.createElement('div');
+    actions.classList.add("actions");
+    content.appendChild(actions);
 
     Object.entries(dataNode.data).forEach(function (key, value) {
       if(typeof key[1] === "object") {
@@ -1547,6 +1577,24 @@ export default class Drawflow {
       input.classList.add("input");
       input.classList.add("input_"+(numInputs+1));
       const parent = this.container.querySelector('#node-'+id+' .inputs');
+      parent.appendChild(input);
+      this.updateConnectionNodes('node-'+id);
+
+    }
+    this.drawflow.drawflow[moduleName].data[id].inputs["input_"+(numInputs+1)] = { "connections": []};
+  }
+
+  addActionNodeInput(id) {
+    var moduleName = this.getModuleFromNodeId(id)
+    const infoNode = this.getNodeFromId(id)
+    const numInputs = Object.keys(infoNode.inputs).length;
+    if(this.module === moduleName) {
+      //Draw input
+      const input = document.createElement('div');
+      input.classList.add("input");
+      input.classList.add("input_"+(numInputs+1));
+      input.classList.add("actionInput");
+      const parent = this.container.querySelector('#node-'+id+' .drawflow_content_node .actions');
       parent.appendChild(input);
       this.updateConnectionNodes('node-'+id);
 
