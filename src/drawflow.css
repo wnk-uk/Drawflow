@@ -174,4 +174,16 @@
 .actions {
   display: flex;
   justify-content: space-around;
+  height: 0px;
+}
+
+.actions .input{
+  top: -11px !important;
+  position: relative !important;
+  left: 0px !important;
+}
+
+.drawflow .drawflow-node .output.action {
+  top: -22px !important;
+  right: 110px !important;
 }

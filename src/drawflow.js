@@ -644,6 +644,7 @@ export default class Drawflow {
           var hx1 = line_x + Math.abs(x - line_x) * curvature;
           var hx2 = x - Math.abs(x - line_x) * curvature;
         }
+
         return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
 
         break
@@ -669,10 +670,33 @@ export default class Drawflow {
         break;
       default:
 
-        var hx1 = line_x + Math.abs(x - line_x) * curvature;
-        var hx2 = x - Math.abs(x - line_x) * curvature;
+        // var hx1 = line_x + Math.abs(x - line_x) * curvature;
+        // var hx2 = x - Math.abs(x - line_x) * curvature;
 
-        return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
+        // return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
+        
+        var deltaX = x - line_x;
+        var absDeltaX = Math.abs(deltaX);
+
+        // 🎯 시작 커브를 더 자연스럽게 휘게 만드는 계수
+        var outputCurveFactor = 1.2; // ← 1.0보다 크면 더 부드럽고 멀리 휘어짐
+
+        var hx1, hx2;
+
+        if (deltaX >= 0) {
+          // 왼쪽 → 오른쪽
+          hx1 = line_x + absDeltaX * curvature * outputCurveFactor;
+          hx2 = x - absDeltaX * curvature;
+        } else {
+          // 오른쪽 → 왼쪽
+          hx1 = line_x - absDeltaX * curvature * outputCurveFactor;
+          hx2 = x + absDeltaX * curvature;
+        }
+
+        //let curveY = 0;
+        let curveY = y - line_y;
+        
+        return `M ${line_x} ${line_y} C ${hx1} ${line_y}, ${hx2} ${y - curveY}, ${x} ${y}`;
     }
 
   }
@@ -683,9 +707,36 @@ export default class Drawflow {
     var path = document.createElementNS('http://www.w3.org/2000/svg',"path");
     path.classList.add("main-path");
     path.setAttributeNS(null, 'd', '');
+    path.setAttribute("marker-end", "url(#arrow)");
     // path.innerHTML = 'a';
+
+
     connection.classList.add("connection");
     connection.appendChild(path);
+
+    // 🔧 <defs> 정의
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
+    const marker = document.createElementNS('http://www.w3.org/2000/svg', "marker");
+    marker.setAttribute("id", "arrow");
+    marker.setAttribute("viewBox", "0 0 20 10");
+    marker.setAttribute("refX", "11"); // 끝에 위치시킴
+    marker.setAttribute("refY", "5");  // 중앙 기준
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "10");
+    marker.setAttribute("orient", "auto");
+    marker.setAttribute("markerUnits", "strokeWidth");
+
+    // 🔼 실제 화살표 path 추가
+    const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', "path");
+    arrowPath.setAttribute("d", "M8,0 L12,5 L8,10");
+    arrowPath.setAttribute("fill", "none");
+    arrowPath.setAttribute("stroke", "#3b82f6");
+    arrowPath.setAttribute("stroke-width", "1.5");
+    
+    marker.appendChild(arrowPath);
+    defs.appendChild(marker);
+    connection.appendChild(defs);
+
     this.precanvas.appendChild(connection);
     var id_output = ele.parentElement.parentElement.id.slice(5);
     var output_class = ele.classList[1];
@@ -1105,8 +1156,11 @@ export default class Drawflow {
       if(this.reroute_fix_curvature) {
 
         const numberPoints = ele.parentElement.querySelectorAll(".main-path").length;
+        ele.parentElement.querySelectorAll(".main-path").forEach(pt => pt.setAttribute("marker-end", ""));
+        
         var path = document.createElementNS('http://www.w3.org/2000/svg',"path");
         path.classList.add("main-path");
+        path.setAttribute("marker-end", "url(#arrow)");
         path.setAttributeNS(null, 'd', '');
 
         ele.parentElement.insertBefore(path, ele.parentElement.children[numberPoints]);
@@ -1201,7 +1255,7 @@ export default class Drawflow {
     return nodes;
   }
 
-  addNode (name, num_in, num_out, ele_pos_x, ele_pos_y, classoverride, data, html, typenode = false) {
+  addNode (name, num_in, num_out, ele_pos_x, ele_pos_y, classoverride, data, html, typenode = false, actionnode = false) {
     if (this.useuuid) {
       var newNodeId = this.getUuid();
     } else {
@@ -1238,6 +1292,7 @@ export default class Drawflow {
       const output = document.createElement('div');
       output.classList.add("output");
       output.classList.add("output_"+(x+1));
+      actionnode ? output.classList.add("action") : null;
       json_outputs["output_"+(x+1)] = { "connections": []};
       outputs.appendChild(output);
     }
@@ -1326,6 +1381,7 @@ export default class Drawflow {
       outputs: json_outputs,
       pos_x: ele_pos_x,
       pos_y: ele_pos_y,
+      actionnode : actionnode,
     }
     this.drawflow.drawflow[this.module].data[newNodeId] = json;
     this.dispatch('nodeCreated', newNodeId);
@@ -1353,17 +1409,24 @@ export default class Drawflow {
     const outputs = document.createElement('div');
     outputs.classList.add("outputs");
 
+    const actions = document.createElement('div');
+    actions.classList.add("actions");
+
     Object.keys(dataNode.inputs).map(function(input_item, index) {
       const input = document.createElement('div');
       input.classList.add("input");
       input.classList.add(input_item);
-      inputs.appendChild(input);
+      dataNode.inputs[input_item].actionnode ? actions.appendChild(input) : inputs.appendChild(input);
       Object.keys(dataNode.inputs[input_item].connections).map(function(output_item, index) {
 
         var connection = document.createElementNS('http://www.w3.org/2000/svg',"svg");
+
+       
+
         var path = document.createElementNS('http://www.w3.org/2000/svg',"path");
         path.classList.add("main-path");
         path.setAttributeNS(null, 'd', '');
+        path.setAttribute("marker-end", "url(#arrow)");
         // path.innerHTML = 'a';
         connection.classList.add("connection");
         connection.classList.add("node_in_node-"+dataNode.id);
@@ -1372,6 +1435,30 @@ export default class Drawflow {
         connection.classList.add(input_item);
 
         connection.appendChild(path);
+
+        // 🔧 <defs> 정의
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', "marker");
+        marker.setAttribute("id", "arrow");
+        marker.setAttribute("viewBox", "0 0 20 10");
+        marker.setAttribute("refX", "11"); // 끝에 위치시킴
+        marker.setAttribute("refY", "5");  // 중앙 기준
+        marker.setAttribute("markerWidth", "10");
+        marker.setAttribute("markerHeight", "10");
+        marker.setAttribute("orient", "auto");
+        marker.setAttribute("markerUnits", "strokeWidth");
+
+        // 🔼 실제 화살표 path 추가
+        const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', "path");
+        arrowPath.setAttribute("d", "M8,0 L12,5 L8,10");
+        arrowPath.setAttribute("fill", "none");
+        arrowPath.setAttribute("stroke", "#3b82f6");
+        arrowPath.setAttribute("stroke-width", "1.5");
+        
+        marker.appendChild(arrowPath);
+        defs.appendChild(marker);
+        connection.appendChild(defs);
+
         precanvas.appendChild(connection);
 
       });
@@ -1380,7 +1467,8 @@ export default class Drawflow {
     for(var x = 0; x < Object.keys(dataNode.outputs).length; x++) {
       const output = document.createElement('div');
       output.classList.add("output");
-      output.classList.add("output_"+(x+1));
+      output.classList.add("output_"+(x+1)); 
+      dataNode.actionnode ? output.classList.add("action") : null;
       outputs.appendChild(output);
     }
 
@@ -1408,10 +1496,6 @@ export default class Drawflow {
         content.appendChild(wrapper.$el);
       }
     }
-
-     const actions = document.createElement('div');
-    actions.classList.add("actions");
-    content.appendChild(actions);
 
     Object.entries(dataNode.data).forEach(function (key, value) {
       if(typeof key[1] === "object") {
@@ -1451,6 +1535,7 @@ export default class Drawflow {
     }
     node.appendChild(inputs);
     node.appendChild(content);
+    content.appendChild(actions);
     node.appendChild(outputs);
     node.style.top = dataNode.pos_y + "px";
     node.style.left = dataNode.pos_x + "px";
@@ -1599,7 +1684,7 @@ export default class Drawflow {
       this.updateConnectionNodes('node-'+id);
 
     }
-    this.drawflow.drawflow[moduleName].data[id].inputs["input_"+(numInputs+1)] = { "connections": []};
+    this.drawflow.drawflow[moduleName].data[id].inputs["input_"+(numInputs+1)] = { "connections": [], "actionnode": true};
   }
 
   addNodeOutput(id) {
