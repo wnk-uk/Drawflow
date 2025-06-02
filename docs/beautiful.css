@@ -198,6 +198,11 @@ cursor: pointer;
   width: 200px;
 }
 
+.drawflow .drawflow-node.rounded {
+  width: 100px;
+  border-radius: 50px 10px 10px 50px;
+}
+
 .drawflow .drawflow-node.selected  {
   background: white;
   border: 1px solid #4ea9ff;
@@ -273,6 +278,10 @@ cursor: pointer;
   border-bottom: 1px solid #e9e9e9;
   border-radius: 4px 4px 0px 0px;
   padding-left: 10px;
+}
+.drawflow .title-box.rounded {
+  width: 90px;
+  border-radius: 50px 10px 10px 50px !important;
 }
 .drawflow .title-box svg {
   position: initial;

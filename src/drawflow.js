@@ -1255,7 +1255,7 @@ export default class Drawflow {
     return nodes;
   }
 
-  addNode (name, num_in, num_out, ele_pos_x, ele_pos_y, classoverride, data, html, typenode = false, actionnode = false) {
+  addNode (name, num_in, num_out, ele_pos_x, ele_pos_y, classoverride, data, html, typenode = false, actionnode = false, rounded = false) {
     if (this.useuuid) {
       var newNodeId = this.getUuid();
     } else {
@@ -1271,6 +1271,8 @@ export default class Drawflow {
     if(classoverride != '') {
       node.classList.add(...classoverride.split(' '));
     }
+
+    rounded ? node.classList.add("rounded") : null;
 
     const inputs = document.createElement('div');
     inputs.classList.add("inputs");
