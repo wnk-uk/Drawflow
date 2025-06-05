@@ -628,78 +628,187 @@ export default class Drawflow {
     }
   }
 
-  createCurvature(start_pos_x, start_pos_y, end_pos_x, end_pos_y, curvature_value, type) {
+  createCurvature(start_pos_x, start_pos_y, end_pos_x, end_pos_y, curvature_value, type, nodeObj) {
     var line_x = start_pos_x;
     var line_y = start_pos_y;
     var x = end_pos_x;
     var y = end_pos_y;
     var curvature = curvature_value;
+    const x1 = line_x;
+    const y1 = line_y;
+    let x2 = x;
+    const y2 = y;
     //type openclose open close other
     switch (type) {
       case 'open':
-        if(start_pos_x >= end_pos_x) {
-          var hx1 = line_x + Math.abs(x - line_x) * curvature;
-          var hx2 = x - Math.abs(x - line_x) * (curvature*-1);
-        } else {
-          var hx1 = line_x + Math.abs(x - line_x) * curvature;
-          var hx2 = x - Math.abs(x - line_x) * curvature;
-        }
-
-        return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
-
-        break
-      case 'close':
-        if(start_pos_x >= end_pos_x) {
-          var hx1 = line_x + Math.abs(x - line_x) * (curvature*-1);
-          var hx2 = x - Math.abs(x - line_x) * curvature;
-        } else {
-          var hx1 = line_x + Math.abs(x - line_x) * curvature;
-          var hx2 = x - Math.abs(x - line_x) * curvature;
-        }
-        return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
-        break;
-      case 'other':
-        if(start_pos_x >= end_pos_x) {
-          var hx1 = line_x + Math.abs(x - line_x) * (curvature*-1);
-          var hx2 = x - Math.abs(x - line_x) * (curvature*-1);
-        } else {
-          var hx1 = line_x + Math.abs(x - line_x) * curvature;
-          var hx2 = x - Math.abs(x - line_x) * curvature;
-        }
-        return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
-        break;
-      default:
-
-        // var hx1 = line_x + Math.abs(x - line_x) * curvature;
-        // var hx2 = x - Math.abs(x - line_x) * curvature;
+        // if(start_pos_x >= end_pos_x) {
+        //   var hx1 = line_x + Math.abs(x - line_x) * curvature;
+        //   var hx2 = x - Math.abs(x - line_x) * (curvature*-1);
+        // } else {
+        //   var hx1 = line_x + Math.abs(x - line_x) * curvature;
+        //   var hx2 = x - Math.abs(x - line_x) * curvature;
+        // }
 
         // return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
         
-        var deltaX = x - line_x;
-        var absDeltaX = Math.abs(deltaX);
 
-        // 🎯 시작 커브를 더 자연스럽게 휘게 만드는 계수
-        var outputCurveFactor = 1.2; // ← 1.0보다 크면 더 부드럽고 멀리 휘어짐
-
-        var hx1, hx2;
-
-        if (deltaX >= 0) {
-          // 왼쪽 → 오른쪽
-          hx1 = line_x + absDeltaX * curvature * outputCurveFactor;
-          hx2 = x - absDeltaX * curvature;
+        //액션노드라면
+        if (nodeObj && nodeObj.actionnode) {
+            if (x2 > x1) { //대상이 좌측
+              if (y2 < y1) { //아래에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+              } else { //위에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+              }
+            } else {  //우측에 있다면
+                if (y2 < y1) { //아래에 있다면
+                  return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+                } else {
+                  return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+                }
+            }
         } else {
-          // 오른쪽 → 왼쪽
-          hx1 = line_x - absDeltaX * curvature * outputCurveFactor;
-          hx2 = x + absDeltaX * curvature;
+          x2 = x2 - 11;
+          if (x2 < x1) {  //대상이 좌측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+            } else { //위에 있다면
+              console.log("111");
+              return `m ${x1} ${y1} L ${x1 + 100} ${y1} L ${x1 + 100} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+              
+            }
+          } else { //대상이 우측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            } else {
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            }
+          }
         }
 
-        //let curveY = 0;
-        let curveY = y - line_y;
-        
-        return `M ${line_x} ${line_y} C ${hx1} ${line_y}, ${hx2} ${y - curveY}, ${x} ${y}`;
-    }
-
+        break
+      case 'close':
+        // if(start_pos_x >= end_pos_x) {
+        //   var hx1 = line_x + Math.abs(x - line_x) * (curvature*-1);
+        //   var hx2 = x - Math.abs(x - line_x) * curvature;
+        // } else {
+        //   var hx1 = line_x + Math.abs(x - line_x) * curvature;
+        //   var hx2 = x - Math.abs(x - line_x) * curvature;
+        // }
+        // return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
+        if (nodeObj && nodeObj.actionnode) {
+            if (x2 > x1) { //대상이 좌측
+              if (y2 < y1) { //아래에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+              } else { //위에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+              }
+            } else {  //우측에 있다면
+                if (y2 < y1) { //아래에 있다면
+                  return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+                } else {
+                  return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+                }
+            }
+        } else {
+          x2 = x2 - 11;
+          if (x2 < x1) {  //대상이 좌측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+            } else { //위에 있다면
+              console.log("111");
+              return `m ${x1} ${y1} L ${x1 + 100} ${y1} L ${x1 + 100} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+              
+            }
+          } else { //대상이 우측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            } else {
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            }
+          }
+        }
+        break;
+      case 'other':
+        // if(start_pos_x >= end_pos_x) {
+        //   var hx1 = line_x + Math.abs(x - line_x) * (curvature*-1);
+        //   var hx2 = x - Math.abs(x - line_x) * (curvature*-1);
+        // } else {
+        //   var hx1 = line_x + Math.abs(x - line_x) * curvature;
+        //   var hx2 = x - Math.abs(x - line_x) * curvature;
+        // }
+        // return ' M '+ line_x +' '+ line_y +' C '+ hx1 +' '+ line_y +' '+ hx2 +' ' + y +' ' + x +'  ' + y;
+        if (nodeObj && nodeObj.actionnode) {
+            if (x2 > x1) { //대상이 좌측
+              if (y2 < y1) { //아래에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+              } else { //위에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+              }
+            } else {  //우측에 있다면
+                if (y2 < y1) { //아래에 있다면
+                  return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+                } else {
+                  return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+                }
+            }
+        } else {
+          x2 = x2 - 11;
+          if (x2 < x1) {  //대상이 좌측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+            } else { //위에 있다면
+              console.log("111");
+              return `m ${x1} ${y1} L ${x1 + 100} ${y1} L ${x1 + 100} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+              
+            }
+          } else { //대상이 우측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            } else {
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            }
+          }
+        }
+        break;
+      default:
+        //액션노드라면
+        if (nodeObj && nodeObj.actionnode) {
+            if (x2 > x1) { //대상이 좌측
+              if (y2 < y1) { //아래에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+              } else { //위에 있다면
+                return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+              }
+            } else {  //우측에 있다면
+                if (y2 < y1) { //아래에 있다면
+                  return `m ${x1} ${y1} L ${x1} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;
+                } else {
+                  return `m ${x1} ${y1} L ${x1} ${y1 - 20} L ${x1 + 120} ${y1 - 20} L ${x1 + 120} ${y1 + 20} L ${x1 + 120} ${y2 + 20} L ${x2} ${y2 + 20} L ${x2} ${y2}`;    
+                }
+            }
+        } else {
+          x2 = x2 - 11;
+          if (x2 < x1) {  //대상이 좌측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+            } else { //위에 있다면
+              console.log("111");
+              return `m ${x1} ${y1} L ${x1 + 100} ${y1} L ${x1 + 100} ${y2 - 50} L ${x2 - 20} ${y2 - 50} L ${x2 - 20} ${y2} L ${x2} ${y2}`;
+              
+            }
+          } else { //대상이 우측
+            if (y2 > y1) { //아래에 있다면
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            } else {
+              return `m ${x1} ${y1} L ${x1 + 20} ${y1} L ${x1 + 20} ${y2} L ${x2} ${y2} L ${x2} ${y2}`;
+            }
+          }
+        }
+      } 
   }
+
+
 
   drawConnection(ele) {
     var connection = document.createElementNS('http://www.w3.org/2000/svg',"svg");
@@ -719,7 +828,7 @@ export default class Drawflow {
     const marker = document.createElementNS('http://www.w3.org/2000/svg', "marker");
     marker.setAttribute("id", "arrow");
     marker.setAttribute("viewBox", "0 0 20 10");
-    marker.setAttribute("refX", "11"); // 끝에 위치시킴
+    marker.setAttribute("refX", "10"); // 끝에 위치시킴
     marker.setAttribute("refY", "5");  // 중앙 기준
     marker.setAttribute("markerWidth", "10");
     marker.setAttribute("markerHeight", "10");
@@ -744,7 +853,8 @@ export default class Drawflow {
 
   }
 
-  updateConnection(eX, eY) {
+  updateConnection(eX, eY, id) {
+    const me = this;
     const precanvas = this.precanvas;
     const zoom = this.zoom;
     let precanvasWitdhZoom = precanvas.clientWidth / (precanvas.clientWidth * zoom);
@@ -760,6 +870,7 @@ export default class Drawflow {
     var y = eY * ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) - (this.precanvas.getBoundingClientRect().y *  ( this.precanvas.clientHeight / (this.precanvas.clientHeight * this.zoom)) );
 
     var curvature = this.curvature;
+
     var lineCurve = this.createCurvature(line_x, line_y, x, y, curvature, 'openclose');
     path.setAttributeNS(null, 'd', lineCurve);
 
@@ -810,6 +921,7 @@ export default class Drawflow {
   updateConnectionNodes(id) {
 
     // Aquí nos quedamos;
+    const me = this;
     const idSearch = 'node_in_'+id;
     const idSearchOut = 'node_out_'+id;
     var line_path = this.line_path/2;
@@ -850,7 +962,7 @@ export default class Drawflow {
         var x = eX;
         var y = eY;
 
-        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose', me.getNodeFromId(id.replace("node-", "")));
         elemsOut[item].children[0].setAttributeNS(null, 'd', lineCurve );
       } else {
         const points = elemsOut[item].querySelectorAll('.point');
@@ -871,7 +983,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -890,7 +1002,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -909,7 +1021,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -924,7 +1036,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -944,7 +1056,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -959,7 +1071,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
           }
@@ -994,7 +1106,7 @@ export default class Drawflow {
         var x = elemtsearchId_in.offsetWidth/2 + (elemtsearchId_in.getBoundingClientRect().x - precanvas.getBoundingClientRect().x ) * precanvasWitdhZoom;
         var y = elemtsearchId_in.offsetHeight/2 + (elemtsearchId_in.getBoundingClientRect().y - precanvas.getBoundingClientRect().y ) * precanvasHeightZoom;
 
-        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose');
+        const lineCurve = createCurvature(line_x, line_y, x, y, curvature, 'openclose', me.getNodeFromId(id_search.replace("node-", "")));
         elems[item].children[0].setAttributeNS(null, 'd', lineCurve );
 
       } else {
@@ -1017,7 +1129,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -1035,7 +1147,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -1055,7 +1167,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'open', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -1070,7 +1182,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -1091,7 +1203,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature_start_end, 'close', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
 
@@ -1107,7 +1219,7 @@ export default class Drawflow {
             var x = eX;
             var y = eY;
 
-            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other');
+            var lineCurveSearch = createCurvature(line_x, line_y, x, y, reroute_curvature, 'other', me.getNodeFromId(id.replace("node-", "")));
             linecurve += lineCurveSearch;
             reoute_fix.push(lineCurveSearch);
           }
@@ -1422,13 +1534,13 @@ export default class Drawflow {
       Object.keys(dataNode.inputs[input_item].connections).map(function(output_item, index) {
 
         var connection = document.createElementNS('http://www.w3.org/2000/svg',"svg");
-
-       
-
         var path = document.createElementNS('http://www.w3.org/2000/svg',"path");
         path.classList.add("main-path");
         path.setAttributeNS(null, 'd', '');
-        path.setAttribute("marker-end", "url(#arrow)");
+        if (!dataNode.inputs[input_item].actionnode) {
+          path.setAttribute("marker-end", "url(#arrow)");
+        }
+        
         // path.innerHTML = 'a';
         connection.classList.add("connection");
         connection.classList.add("node_in_node-"+dataNode.id);
@@ -1437,7 +1549,7 @@ export default class Drawflow {
         connection.classList.add(input_item);
 
         connection.appendChild(path);
-
+        
         // 🔧 <defs> 정의
         const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
         const marker = document.createElementNS('http://www.w3.org/2000/svg', "marker");
@@ -1460,8 +1572,9 @@ export default class Drawflow {
         marker.appendChild(arrowPath);
         defs.appendChild(marker);
         connection.appendChild(defs);
+      
 
-        precanvas.appendChild(connection);
+      precanvas.appendChild(connection);
 
       });
     });
